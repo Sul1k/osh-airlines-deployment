@@ -27,8 +27,9 @@ export class AuthService {
 
   async login(user: any) {
     console.log('login -> user received:', user);
+    const userId = (user as any)._id?.toString() || (user as any).id?.toString();
     const payload = {
-      sub: user._id?.toString() || user.id?.toString(),
+      sub: userId,
       email: user.email,
       role: user.role
     };
@@ -38,7 +39,7 @@ export class AuthService {
     return {
       access_token,
       user: {
-        id: user._id || user.id,
+        id: (user as any)._id || (user as any).id,
         email: user.email,
         name: user.name,
         role: user.role,
@@ -56,8 +57,9 @@ export class AuthService {
     const { password, ...userWithoutPassword } = user;
     
     // Generate JWT token for the new user
+    const userId = (user as any)._id?.toString() || (user as any).id?.toString();
     const payload = {
-      sub: user._id?.toString() || user.id?.toString(),
+      sub: userId,
       email: user.email,
       role: user.role
     };
