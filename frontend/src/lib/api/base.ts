@@ -1,5 +1,5 @@
 // Base API configuration and utilities
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1010/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export interface ApiResponse<T = any> {
   data?: T;

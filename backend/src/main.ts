@@ -26,9 +26,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.FRONTEND_URL || 'https://your-frontend.netlify.app'] 
-      : ['http://localhost:5173', 'http://localhost:3002', 'http://localhost:3001', 'http://localhost:5051', 'http://localhost:5052'],
+    origin: true, // Allow all origins in production (same domain)
     credentials: true,
   });
 
