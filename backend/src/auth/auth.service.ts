@@ -53,7 +53,19 @@ export class AuthService {
     }
     
     const user = await this.usersService.create(createUserDto);
-    const { password, ...result } = user;
-    return result;
+    const { password, ...userWithoutPassword } = user;
+    
+    // Generate JWT token for the new user
+    const payload = {
+      sub: user._id?.toString() || user.id?.toString(),
+      email: user.email,
+      role: user.role
+    };
+    const access_token = this.jwtService.sign(payload);
+    
+    return {
+      access_token,
+      user: userWithoutPassword,
+    };
   }
 }
