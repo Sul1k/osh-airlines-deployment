@@ -30,67 +30,70 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve static files from frontend build (only in production)
-  if (process.env.NODE_ENV === 'production') {
-    // Try multiple possible paths for Railway deployment
-    const frontendPaths = [
-      join(__dirname, '..', '..', 'frontend', 'build'),
-      join(__dirname, '..', '..', '..', 'frontend', 'build'),
-      join(process.cwd(), 'frontend', 'build'),
-      join(process.cwd(), '..', 'frontend', 'build')
-    ];
-    
-    for (const path of frontendPaths) {
-      try {
-        const fs = require('fs');
-        if (fs.existsSync(path)) {
-          app.useStaticAssets(path);
-          logger.log(`📁 Serving static files from: ${path}`);
-          break;
-        }
-      } catch (error) {
-        // Continue to next path
+  // Serve static files from frontend build
+  const frontendPaths = [
+    join(__dirname, '..', '..', 'frontend', 'build'),
+    join(__dirname, '..', '..', '..', 'frontend', 'build'),
+    join(process.cwd(), 'frontend', 'build'),
+    join(process.cwd(), '..', 'frontend', 'build')
+  ];
+  
+  for (const path of frontendPaths) {
+    try {
+      const fs = require('fs');
+      if (fs.existsSync(path)) {
+        app.useStaticAssets(path);
+        logger.log(`📁 Serving static files from: ${path}`);
+        break;
       }
+    } catch (error) {
+      // Continue to next path
     }
   }
   
   // Global prefix for API routes only
   app.setGlobalPrefix('api/v1');
   
-  // Serve frontend for all non-API routes (only in production)
-  if (process.env.NODE_ENV === 'production') {
-    app.use('*', (req: any, res: any) => {
-      const frontendPaths = [
-        join(__dirname, '..', '..', 'frontend', 'build', 'index.html'),
-        join(__dirname, '..', '..', '..', 'frontend', 'build', 'index.html'),
-        join(process.cwd(), 'frontend', 'build', 'index.html'),
-        join(process.cwd(), '..', 'frontend', 'build', 'index.html')
-      ];
-      
-      for (const path of frontendPaths) {
-        try {
-          const fs = require('fs');
-          if (fs.existsSync(path)) {
-            return res.sendFile(path);
-          }
-        } catch (error) {
-          // Continue to next path
+  // Serve frontend for all non-API routes
+  app.use('*', (req: any, res: any) => {
+    const frontendPaths = [
+      join(__dirname, '..', '..', 'frontend', 'build', 'index.html'),
+      join(__dirname, '..', '..', '..', 'frontend', 'build', 'index.html'),
+      join(process.cwd(), 'frontend', 'build', 'index.html'),
+      join(process.cwd(), '..', 'frontend', 'build', 'index.html')
+    ];
+    
+    for (const path of frontendPaths) {
+      try {
+        const fs = require('fs');
+        if (fs.existsSync(path)) {
+          return res.sendFile(path);
         }
+      } catch (error) {
+        // Continue to next path
       }
-      
-      res.status(404).send('Frontend not found');
-    });
-  }
+    }
+    
+    res.status(404).send('Frontend not found');
+  });
 
   const port = process.env.PORT ?? 1010;
-  await app.listen(port);
   
-  logger.log(`🚀 Application is running on: http://localhost:${port}`);
-  logger.log(`🌐 Frontend served at: http://localhost:${port}`);
-  logger.log(`🔌 API available at: http://localhost:${port}/api/v1`);
-  logger.log(`📊 Enhanced Error Handling: ENABLED`);
-  logger.log(`🔒 Security Headers: ENABLED`);
-  logger.log(`📝 Request Logging: ENABLED`);
-  logger.log(`✅ Input Validation: ENABLED`);
+  try {
+    await app.listen(port);
+    
+    logger.log(`🚀 Application is running on: http://localhost:${port}`);
+    logger.log(`🌐 Frontend served at: http://localhost:${port}`);
+    logger.log(`🔌 API available at: http://localhost:${port}/api/v1`);
+    logger.log(`📊 Enhanced Error Handling: ENABLED`);
+    logger.log(`🔒 Security Headers: ENABLED`);
+    logger.log(`📝 Request Logging: ENABLED`);
+    logger.log(`✅ Input Validation: ENABLED`);
+    logger.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.log(`📁 Working Directory: ${process.cwd()}`);
+  } catch (error) {
+    logger.error('❌ Failed to start application:', error);
+    process.exit(1);
+  }
 }
 bootstrap();
