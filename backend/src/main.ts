@@ -37,7 +37,9 @@ async function bootstrap() {
     join(process.cwd(), 'frontend', 'build'),
     join(process.cwd(), '..', 'frontend', 'build'),
     join(__dirname, '..', '..', '..', '..', 'frontend', 'build'),
-    join(process.cwd(), '..', '..', 'frontend', 'build')
+    join(process.cwd(), '..', '..', 'frontend', 'build'),
+    '/app/frontend/build',
+    '/app/../frontend/build'
   ];
   
   let staticPathFound = false;
@@ -76,6 +78,17 @@ async function bootstrap() {
   if (!staticPathFound) {
     logger.error('❌ No frontend build directory found!');
     logger.error('Searched paths:', frontendPaths);
+    
+    // Try to list the current working directory and __dirname for debugging
+    try {
+      const fs = require('fs');
+      logger.error('Current working directory:', process.cwd());
+      logger.error('__dirname:', __dirname);
+      logger.error('Contents of process.cwd():', fs.readdirSync(process.cwd()));
+      logger.error('Contents of __dirname:', fs.readdirSync(__dirname));
+    } catch (debugError) {
+      logger.error('Could not debug directory structure:', debugError.message);
+    }
   }
   
   // Global prefix for API routes only
