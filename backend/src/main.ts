@@ -59,7 +59,7 @@ async function bootstrap() {
   
   // Serve frontend for all non-API routes (only in production)
   if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
+    app.get('*', (req: any, res: any) => {
       const frontendPaths = [
         join(__dirname, '..', '..', 'frontend', 'build', 'index.html'),
         join(__dirname, '..', '..', '..', 'frontend', 'build', 'index.html'),
