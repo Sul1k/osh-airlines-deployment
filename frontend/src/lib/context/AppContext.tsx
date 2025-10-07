@@ -498,11 +498,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [showSuccess, showError]);
 
   const deleteGalleryImage = useCallback(async (id: string): Promise<void> => {
+    console.log('🗑️ deleteGalleryImage called with ID:', id);
     try {
+      console.log('🗑️ Calling galleryApi.delete...');
       await galleryApi.delete(id);
+      console.log('🗑️ API call successful, updating state...');
       setGallery(prev => prev.filter(g => g.id !== id));
+      console.log('🗑️ State updated, showing success message...');
       showSuccess('Gallery image deleted successfully!');
     } catch (error: any) {
+      console.error('🗑️ Error deleting gallery image:', error);
       showError(error.message || 'Failed to delete gallery image');
       throw error;
     }

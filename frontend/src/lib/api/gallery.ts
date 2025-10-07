@@ -105,9 +105,13 @@ export const galleryApi = {
    * Delete gallery image
    */
   async delete(id: string): Promise<void> {
+    console.log('🗑️ galleryApi.delete called with ID:', id);
     try {
+      console.log('🗑️ Making DELETE request to /gallery/' + id);
       await apiClient.delete(`/gallery/${id}`);
+      console.log('🗑️ DELETE request successful');
     } catch (error: any) {
+      console.error('🗑️ DELETE request failed:', error);
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');

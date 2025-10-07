@@ -326,13 +326,17 @@ export function AdminDashboard() {
   };
 
   const handleDeleteGalleryImage = (imageId: string) => {
+    console.log('🗑️ Delete button clicked for image ID:', imageId);
     if (!imageId) {
       error('Image ID is missing. Cannot delete image.');
       return;
     }
     if (confirm('Are you sure you want to delete this image?')) {
+      console.log('🗑️ Confirmed deletion, calling deleteGalleryImage...');
       deleteGalleryImage(imageId);
       success('Gallery image deleted successfully');
+    } else {
+      console.log('🗑️ Deletion cancelled by user');
     }
   };
 
