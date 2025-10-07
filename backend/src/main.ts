@@ -55,7 +55,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
   
   // Serve frontend for all non-API routes
-  app.use('*', (req: any, res: any) => {
+  app.use((req: any, res: any, next: any) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    
     const frontendPaths = [
       join(__dirname, '..', '..', 'frontend', 'build', 'index.html'),
       join(__dirname, '..', '..', '..', 'frontend', 'build', 'index.html'),
