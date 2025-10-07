@@ -87,6 +87,10 @@ export function AdminDashboard() {
   // Gallery Delete Confirmation Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<{ id: string; title: string } | null>(null);
+  
+  // Banner Delete Confirmation Dialog State
+  const [isBannerDeleteDialogOpen, setIsBannerDeleteDialogOpen] = useState(false);
+  const [bannerToDelete, setBannerToDelete] = useState<{ id: string; title: string } | null>(null);
 
   if (!currentUser || currentUser.role !== 'admin') {
     navigate('/login');
@@ -285,14 +289,28 @@ export function AdminDashboard() {
     setIsBannerDialogOpen(true);
   };
 
-  const handleDeleteBanner = (bannerId: string) => {
+  const handleDeleteBanner = (bannerId: string, bannerTitle: string) => {
+    console.log('🗑️ Delete banner button clicked for banner ID:', bannerId);
     if (!bannerId) {
       error('Banner ID is missing. Cannot delete banner.');
       return;
     }
-    if (confirm('Are you sure you want to delete this banner?')) {
-      deleteBanner(bannerId);
+    setBannerToDelete({ id: bannerId, title: bannerTitle });
+    setIsBannerDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteBanner = async () => {
+    if (!bannerToDelete) return;
+    
+    console.log('🗑️ Confirmed banner deletion, calling deleteBanner...');
+    try {
+      await deleteBanner(bannerToDelete.id);
       success('Banner deleted successfully');
+    } catch (error) {
+      // Error is already handled in deleteBanner
+    } finally {
+      setIsBannerDeleteDialogOpen(false);
+      setBannerToDelete(null);
     }
   };
 
@@ -738,7 +756,7 @@ export function AdminDashboard() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => banner.id ? handleDeleteBanner(banner.id) : error('Banner ID is missing. Cannot delete banner.')}
+                      onClick={() => banner.id ? handleDeleteBanner(banner.id, banner.title) : error('Banner ID is missing. Cannot delete banner.')}
                     >
                       <Trash2 className="w-4 h-4 text-destructive mr-1" />
                       Delete
@@ -929,6 +947,36 @@ export function AdminDashboard() {
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Banner Delete Confirmation Dialog */}
+      <Dialog open={isBannerDeleteDialogOpen} onOpenChange={setIsBannerDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Banner</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the banner "{bannerToDelete?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsBannerDeleteDialogOpen(false);
+                setBannerToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteBanner}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Banner
             </Button>
           </DialogFooter>
         </DialogContent>
