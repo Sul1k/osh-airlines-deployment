@@ -106,7 +106,7 @@ export const galleryApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiClient.get(`/gallery/${id}`);
+      await apiClient.delete(`/gallery/${id}`);
     } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
