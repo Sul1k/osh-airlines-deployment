@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Plane, Calendar, Clock, User, Mail, CheckCircle } from 'lucide-react';
+import { Plane, Calendar, Clock, User, Mail, CheckCircle, Plus, Minus } from 'lucide-react';
 import { useApp } from '../lib/context/AppContext';
 import { useToast } from '../hooks/useToast';
 import { Button } from '../components/ui/button';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { formatDuration } from '../lib/utils/duration';
 
 export function Booking() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,7 @@ export function Booking() {
   );
   const [passengerName, setPassengerName] = useState(currentUser?.name || '');
   const [passengerEmail, setPassengerEmail] = useState(currentUser?.email || '');
+  const [quantity, setQuantity] = useState(1);
   const [confirmationId, setConfirmationId] = useState('');
   const [isBooked, setIsBooked] = useState(false);
 
@@ -45,9 +47,10 @@ export function Booking() {
   }
 
   const company = companies.find(c => c.id === flight.companyId);
-  const price = flight.price?.[seatClass] || (seatClass === 'economy' ? flight.economyPrice : 
+  const pricePerTicket = flight.price?.[seatClass] || (seatClass === 'economy' ? flight.economyPrice : 
                                               seatClass === 'comfort' ? flight.comfortPrice : 
                                               flight.businessPrice) || 0;
+  const totalPrice = pricePerTicket * quantity;
   const seats = (seatClass === 'economy' ? { total: flight.economySeats, available: flight.economySeats } :
                  seatClass === 'comfort' ? { total: flight.comfortSeats || 0, available: flight.comfortSeats || 0 } :
                  { total: flight.businessSeats || 0, available: flight.businessSeats || 0 });
@@ -60,22 +63,34 @@ export function Booking() {
       return;
     }
 
-    if (seats.available === 0) {
+    if (seats.available < quantity) {
+      error(`Only ${seats.available} seats available in ${seatClass} class`);
       return;
     }
 
-    const confirmId = await addBooking({
-      userId: currentUser.id,
-      flightId: flight.id,
-      passengerName,
-      passengerEmail,
-      seatClass,
-      price,
-    });
+    try {
+      // Create multiple bookings for the quantity
+      const confirmationIds = [];
+      for (let i = 0; i < quantity; i++) {
+        const confirmId = await addBooking({
+          userId: currentUser.id,
+          flightId: flight.id,
+          passengerName,
+          passengerEmail,
+          seatClass,
+          price: pricePerTicket,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        confirmationIds.push(confirmId);
+      }
 
-    setConfirmationId(confirmId);
-    setIsBooked(true);
-    success('Booking confirmed successfully!');
+      setConfirmationId(confirmationIds.join(', '));
+      setIsBooked(true);
+      success(`Successfully booked ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
+    } catch (error) {
+      console.error('Booking error:', error);
+    }
   };
 
   if (isBooked) {
@@ -93,10 +108,12 @@ export function Booking() {
               </p>
 
               <div className="bg-muted p-6 rounded-lg mb-6">
-                <p className="text-sm text-muted-foreground mb-2">Confirmation ID</p>
-                <p className="text-2xl mb-4">{confirmationId}</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Confirmation ID{quantity > 1 ? 's' : ''}
+                </p>
+                <p className="text-2xl mb-4 break-all">{confirmationId}</p>
                 <p className="text-sm text-muted-foreground">
-                  Please save this confirmation ID for future reference
+                  Please save {quantity > 1 ? 'these confirmation IDs' : 'this confirmation ID'} for future reference
                 </p>
               </div>
 
@@ -153,7 +170,7 @@ export function Booking() {
 
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>Duration: {flight.duration}</span>
+                <span>Duration: {formatDuration(flight.duration)}</span>
               </div>
             </CardContent>
           </Card>
@@ -206,6 +223,45 @@ export function Booking() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Number of Tickets</Label>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    max={seats.available}
+                    value={quantity}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setQuantity(Math.max(1, Math.min(value, seats.available)));
+                    }}
+                    className="w-20 text-center"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.min(seats.available, quantity + 1))}
+                    disabled={quantity >= seats.available}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Maximum {seats.available} tickets available
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -227,8 +283,12 @@ export function Booking() {
                   <span className="capitalize">{seatClass}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Passenger</span>
-                  <span>1</span>
+                  <span className="text-muted-foreground">Passengers</span>
+                  <span>{quantity}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Price per ticket</span>
+                  <span>${pricePerTicket}</span>
                 </div>
               </div>
 
@@ -236,7 +296,7 @@ export function Booking() {
 
               <div className="flex justify-between items-center">
                 <span>Total Amount</span>
-                <span className="text-2xl">${price}</span>
+                <span className="text-2xl">${totalPrice}</span>
               </div>
 
               {seats.available === 0 ? (
@@ -258,7 +318,7 @@ export function Booking() {
                 onClick={handleBooking}
                 disabled={!passengerName || !passengerEmail || seats.available === 0}
               >
-                Confirm & Pay ${price}
+                Confirm & Pay ${totalPrice}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">

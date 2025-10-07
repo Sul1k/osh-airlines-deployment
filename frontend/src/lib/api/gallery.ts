@@ -3,8 +3,8 @@
  * Handles gallery management operations
  */
 
-import { apiRequest } from './base';
-import { GalleryImage } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, Booking, Company, Flight, Gallery, GalleryImage, User, normalizeId } from './base';
 
 // Gallery interfaces
 export interface CreateGalleryRequest {
@@ -40,13 +40,13 @@ export const galleryApi = {
    */
   async getAll(): Promise<GalleryImage[]> {
     try {
-      const response = await apiRequest<GalleryImage[]>('/gallery');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<GalleryImage[]>('/gallery');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch gallery images');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching gallery images');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -55,16 +55,16 @@ export const galleryApi = {
    */
   async getById(id: string): Promise<GalleryImage> {
     try {
-      const response = await apiRequest<GalleryImage>(`/gallery/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<GalleryImage>(`/gallery/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');
         }
         throw new Error(error.message || 'Failed to fetch gallery image');
       }
-      throw new Error('An unexpected error occurred while fetching gallery image');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -73,13 +73,13 @@ export const galleryApi = {
    */
   async create(galleryData: CreateGalleryRequest): Promise<GalleryImage> {
     try {
-      const response = await apiRequest<GalleryImage>('/gallery', galleryData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<GalleryImage>('/gallery', galleryData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to create gallery image');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while creating gallery image');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -89,15 +89,15 @@ export const galleryApi = {
   async update(id: string, galleryData: UpdateGalleryRequest): Promise<GalleryImage> {
     try {
       const response = await apiClient.patch<GalleryImage>(`/gallery/${id}`, galleryData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');
         }
         throw new Error(error.message || 'Failed to update gallery image');
       }
-      throw new Error('An unexpected error occurred while updating gallery image');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -106,15 +106,15 @@ export const galleryApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/gallery/${id}`);
-    } catch (error) {
+      await apiClient.get(`/gallery/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');
         }
         throw new Error(error.message || 'Failed to delete gallery image');
       }
-      throw new Error('An unexpected error occurred while deleting gallery image');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -123,13 +123,13 @@ export const galleryApi = {
    */
   async getByCategory(category: 'aircraft' | 'destination' | 'service' | 'event'): Promise<GalleryImage[]> {
     try {
-      const response = await apiRequest<GalleryImage[]>(`/gallery?category=${category}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<GalleryImage[]>(`/gallery?category=${category}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch gallery images by category');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching gallery images by category');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -140,11 +140,11 @@ export const galleryApi = {
     try {
       const gallery = await this.getAll();
       return gallery.filter(image => image.active !== false);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch active gallery images');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching active gallery images');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -155,11 +155,11 @@ export const galleryApi = {
     try {
       const gallery = await this.getByCategory(category);
       return gallery.filter(image => image.active !== false);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch active gallery images by category');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching active gallery images by category');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -169,15 +169,15 @@ export const galleryApi = {
   async activate(id: string): Promise<GalleryImage> {
     try {
       const response = await apiClient.patch<GalleryImage>(`/gallery/${id}`, { active: true });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');
         }
         throw new Error(error.message || 'Failed to activate gallery image');
       }
-      throw new Error('An unexpected error occurred while activating gallery image');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -187,15 +187,15 @@ export const galleryApi = {
   async deactivate(id: string): Promise<GalleryImage> {
     try {
       const response = await apiClient.patch<GalleryImage>(`/gallery/${id}`, { active: false });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Gallery image not found');
         }
         throw new Error(error.message || 'Failed to deactivate gallery image');
       }
-      throw new Error('An unexpected error occurred while deactivating gallery image');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

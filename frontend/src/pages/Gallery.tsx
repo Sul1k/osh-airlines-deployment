@@ -6,8 +6,20 @@ export function Gallery() {
   const { gallery, loadGallery } = useApp();
 
   useEffect(() => {
+    console.log('🖼️ Gallery page: Loading gallery images...');
     loadGallery();
   }, []); // Empty dependency array to run only once
+
+  // Console logging for gallery images
+  useEffect(() => {
+    console.log('🖼️ Gallery images loaded:', gallery.length);
+    console.log('🖼️ Gallery images:', gallery.map(img => ({ 
+      id: img.id, 
+      title: img.title,
+      category: img.category,
+      active: img.active
+    })));
+  }, [gallery]);
 
   return (
     <div className="container mx-auto px-4 py-16">

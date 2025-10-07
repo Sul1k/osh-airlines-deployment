@@ -3,8 +3,8 @@
  * Handles flight management and search operations
  */
 
-import { apiRequest } from './base';
-import { Flight } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, Booking, Company, Flight, Gallery, User, normalizeId } from './base';
 
 // Flight interfaces
 export interface CreateFlightRequest {
@@ -63,13 +63,13 @@ export const flightsApi = {
    */
   async getAll(): Promise<Flight[]> {
     try {
-      const response = await apiRequest<Flight[]>('/flights');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Flight[]>('/flights');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch flights');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching flights');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -78,16 +78,16 @@ export const flightsApi = {
    */
   async getById(id: string): Promise<Flight> {
     try {
-      const response = await apiRequest<Flight>(`/flights/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Flight>(`/flights/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Flight not found');
         }
         throw new Error(error.message || 'Failed to fetch flight');
       }
-      throw new Error('An unexpected error occurred while fetching flight');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -105,13 +105,13 @@ export const flightsApi = {
       const queryString = queryParams.toString();
       const endpoint = queryString ? `/flights?${queryString}` : '/flights';
       
-      const response = await apiRequest<Flight[]>(endpoint);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Flight[]>(endpoint);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to search flights');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while searching flights');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -120,16 +120,16 @@ export const flightsApi = {
    */
   async create(flightData: CreateFlightRequest): Promise<Flight> {
     try {
-      const response = await apiRequest<Flight>('/flights', flightData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<Flight>('/flights', flightData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 409) {
           throw new Error('Flight with this number already exists for this company');
         }
         throw new Error(error.message || 'Failed to create flight');
       }
-      throw new Error('An unexpected error occurred while creating flight');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -139,8 +139,8 @@ export const flightsApi = {
   async update(id: string, flightData: UpdateFlightRequest): Promise<Flight> {
     try {
       const response = await apiClient.patch<Flight>(`/flights/${id}`, flightData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Flight not found');
@@ -150,7 +150,7 @@ export const flightsApi = {
         }
         throw new Error(error.message || 'Failed to update flight');
       }
-      throw new Error('An unexpected error occurred while updating flight');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -159,15 +159,15 @@ export const flightsApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/flights/${id}`);
-    } catch (error) {
+      await apiClient.get(`/flights/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Flight not found');
         }
         throw new Error(error.message || 'Failed to delete flight');
       }
-      throw new Error('An unexpected error occurred while deleting flight');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -178,11 +178,11 @@ export const flightsApi = {
     try {
       const flights = await this.getAll();
       return flights.filter(flight => flight.companyId === companyId);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch company flights');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching company flights');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -193,11 +193,11 @@ export const flightsApi = {
     try {
       const flights = await this.getAll();
       return flights.filter(flight => flight.isActive !== false);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch featured flights');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching featured flights');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

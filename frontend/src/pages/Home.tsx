@@ -6,6 +6,7 @@ import { useApp } from '../lib/context/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { formatDuration } from '../lib/utils/duration';
 
 export function Home() {
   const { banners, flights, companies, loadFlights, loadBanners, loadCompanies } = useApp();
@@ -13,6 +14,7 @@ export function Home() {
 
   // Load data when component mounts
   useEffect(() => {
+    console.log('🏠 Home page: Loading flights, banners, and companies...');
     loadFlights();
     loadBanners();
     loadCompanies();
@@ -38,10 +40,40 @@ export function Home() {
     setCurrentBanner((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
   };
 
-  // Featured flights (upcoming, limited seats)
+  // Featured flights (upcoming, limited seats, with available seats)
   const featuredFlights = flights
-    .filter(f => f.isActive && new Date(f.departureDate) > new Date())
+    .filter(f => {
+      const isActive = f.isActive;
+      const isUpcoming = f.status === 'upcoming' || new Date(f.departureDate) > new Date();
+      const hasAvailableSeats = (f.economySeats || 0) + (f.comfortSeats || 0) + (f.businessSeats || 0) > 0;
+      return isActive && isUpcoming && hasAvailableSeats;
+    })
     .slice(0, 3);
+
+  // Console logging for flights
+  useEffect(() => {
+    console.log('✈️ All flights loaded:', flights.length);
+    console.log('✈️ Upcoming flights:', featuredFlights.length);
+    console.log('✈️ Featured flights:', featuredFlights.map(f => ({ 
+      flightNumber: f.flightNumber, 
+      origin: f.origin, 
+      destination: f.destination,
+      departureDate: f.departureDate,
+      isUpcoming: new Date(f.departureDate) > new Date()
+    })));
+  }, [flights, featuredFlights]);
+
+  // Console logging for banners
+  useEffect(() => {
+    console.log('🎯 All banners loaded:', banners.length);
+    console.log('🎯 Active banners:', activeBanners.length);
+    console.log('🎯 Banner details:', activeBanners.map(b => ({
+      title: b.title,
+      link: b.link,
+      hasLink: !!b.link,
+      linkType: typeof b.link
+    })));
+  }, [banners, activeBanners]);
 
   const getCompanyName = (companyId: string) => {
     return companies.find(c => c.id === companyId)?.name || 'Unknown';
@@ -56,8 +88,11 @@ export function Home() {
             <div
               key={banner.id}
               className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentBanner ? 'opacity-100' : 'opacity-0'
+                index === currentBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
+              style={{
+                pointerEvents: index === currentBanner ? 'auto' : 'none'
+              }}
             >
               <img
                 src={banner.imageUrl}
@@ -70,12 +105,37 @@ export function Home() {
                     <Badge className="mb-4">{banner.type}</Badge>
                     <h1 className="mb-4">{banner.title}</h1>
                     <p className="mb-6 text-lg">{banner.description}</p>
-                    {banner.link && (
-                      <Link to={banner.link}>
+                    {banner.link ? (
+                      <a 
+                        href={banner.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block"
+                        onClick={(e) => {
+                          console.log('Banner link clicked:', banner.link);
+                          console.log('Banner title:', banner.title);
+                          console.log('Event target:', e.target);
+                          console.log('Event currentTarget:', e.currentTarget);
+                          console.log('Current banner index:', currentBanner);
+                          console.log('This banner index:', index);
+                          // Force the link to open
+                          if (banner.link) {
+                            window.open(banner.link, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        style={{ 
+                          textDecoration: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
                         <Button size="lg" variant="secondary">
                           Learn More
                         </Button>
-                      </Link>
+                      </a>
+                    ) : (
+                      <div className="text-sm text-gray-400">
+                        No link available
+                      </div>
                     )}
                   </div>
                 </div>
@@ -218,7 +278,7 @@ export function Home() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Duration</span>
-                      <span>{flight.duration}</span>
+                      <span>{formatDuration(flight.duration)}</span>
                     </div>
                     <div className="flex justify-between items-end pt-2 border-t">
                       <span className="text-sm text-muted-foreground">From</span>

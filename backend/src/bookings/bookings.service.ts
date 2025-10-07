@@ -17,6 +17,27 @@ export class BookingsService {
     // Validate booking data
     await this.validateBookingData(createBookingDto);
 
+    // Get flight to update seat counts
+    const flight = await this.flightModel.findById(createBookingDto.flightId);
+    if (!flight) {
+      throw new NotFoundException('Flight not found');
+    }
+
+    // Update seat counts based on seat class
+    const seatClass = createBookingDto.seatClass;
+    if (seatClass === 'economy' && flight.economySeats > 0) {
+      flight.economySeats -= 1;
+    } else if (seatClass === 'comfort' && flight.comfortSeats > 0) {
+      flight.comfortSeats -= 1;
+    } else if (seatClass === 'business' && flight.businessSeats > 0) {
+      flight.businessSeats -= 1;
+    } else {
+      throw new BadRequestException(`No ${seatClass} seats available`);
+    }
+
+    // Save updated flight
+    await flight.save();
+
     // Generate unique confirmation ID
     const confirmationId = this.generateConfirmationId();
     
@@ -130,6 +151,24 @@ export class BookingsService {
     const departureDate = new Date(flight.departureDate);
     const now = new Date();
     const hoursUntilDeparture = (departureDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    // Check if cancellation is allowed (24+ hours before departure)
+    if (hoursUntilDeparture < 24) {
+      throw new BadRequestException(`Cannot cancel booking. Flights can only be cancelled up to 24 hours before departure. Current time until departure: ${Math.round(hoursUntilDeparture * 10) / 10} hours`);
+    }
+
+    // Restore seat count when cancelling
+    const seatClass = booking.seatClass;
+    if (seatClass === 'economy') {
+      flight.economySeats += 1;
+    } else if (seatClass === 'comfort') {
+      flight.comfortSeats += 1;
+    } else if (seatClass === 'business') {
+      flight.businessSeats += 1;
+    }
+    
+    // Save updated flight
+    await flight.save();
 
     // Determine if refund is eligible (24+ hours before departure)
     const isRefundEligible = hoursUntilDeparture >= 24;

@@ -171,6 +171,8 @@ export function AdminDashboard() {
           code: sanitizedCode,
           managerId: createdUser.id,
           isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
       } catch (err) {
         console.error('Error creating company:', err);
@@ -358,7 +360,7 @@ export function AdminDashboard() {
       const hasUpcomingStatus = f.status === 'upcoming' || f.status === undefined;
       return hasUpcomingStatus && departureDate > now;
     }).length;
-    const completedFlights = flights.filter(f => f.status === 'completed' || new Date(f.departureDate) < now).length;
+    const completedFlights = flights.filter(f => f.status === 'passed' || new Date(f.departureDate) < now).length;
     const totalPassengers = relevantBookings.length;
     const totalRevenue = relevantBookings.reduce((sum, b) => sum + b.price, 0);
 

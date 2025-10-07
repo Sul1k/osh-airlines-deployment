@@ -128,4 +128,12 @@ export class FlightsService {
     const departure = new Date(departureDate);
     return departure > now ? 'upcoming' : 'passed';
   }
+
+  async cancelFlight(id: string): Promise<Flight | null> {
+    return this.flightModel.findByIdAndUpdate(
+      id, 
+      { status: 'cancelled' }, 
+      { new: true }
+    ).exec();
+  }
 }

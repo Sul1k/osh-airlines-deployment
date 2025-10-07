@@ -16,7 +16,19 @@ import { Toaster } from './components/ui/sonner';
 
 // Protected route wrapper
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
-  const { currentUser } = useApp();
+  const { currentUser, isAuthLoading } = useApp();
+
+  // Show loading while authentication is being checked
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
@@ -31,7 +43,18 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 
 // Dashboard router based on role
 function DashboardRouter() {
-  const { currentUser } = useApp();
+  const { currentUser, isAuthLoading } = useApp();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;

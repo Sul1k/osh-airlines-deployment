@@ -32,6 +32,12 @@ export class FlightsController {
     return this.flightsService.update(id, updateFlightDto);
   }
 
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard)
+  cancelFlight(@Param('id') id: string) {
+    return this.flightsService.cancelFlight(id);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {

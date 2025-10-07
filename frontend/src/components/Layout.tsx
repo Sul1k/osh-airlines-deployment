@@ -132,7 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h4 className="mb-4">Contact Info</h4>
               <ul className="space-y-2 text-sm text-primary-foreground/80">
                 <li>Email: info@oshairlines.com</li>
-                <li>Phone: +1 (555) 123-4567</li>
+                <li>Phone: +996 (555) 123-456</li>
                 <li>24/7 Customer Support</li>
               </ul>
             </div>

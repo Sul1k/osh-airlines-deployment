@@ -1,5 +1,5 @@
 // Base API configuration and utilities
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api/v1';
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -11,9 +11,12 @@ export interface ApiResponse<T = any> {
 export interface User {
   id: string;
   email: string;
+  password: string;
   name: string;
   role: 'user' | 'company_manager' | 'admin';
   isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
@@ -22,7 +25,7 @@ export interface AuthResponse {
 }
 
 export interface Flight {
-  _id: string;
+  id: string;
   flightNumber: string;
   origin: string;
   destination: string;
@@ -37,12 +40,24 @@ export interface Flight {
   businessPrice?: number;
   businessSeats?: number;
   isActive: boolean;
+  status?: 'upcoming' | 'passed' | 'cancelled' | 'refunded';
   createdAt: string;
   updatedAt: string;
+  // Additional properties for compatibility
+  price?: {
+    economy: number;
+    comfort: number;
+    business: number;
+  };
+  seats?: {
+    economy: { total: number; available: number };
+    comfort: { total: number; available: number };
+    business: { total: number; available: number };
+  };
 }
 
 export interface Booking {
-  _id: string;
+  id: string;
   userId: string;
   flightId: string;
   passengerName: string;
@@ -50,7 +65,8 @@ export interface Booking {
   seatClass: 'economy' | 'comfort' | 'business';
   price: number;
   confirmationId: string;
-  status: 'confirmed' | 'cancelled';
+  status: 'confirmed' | 'cancelled' | 'refunded';
+  bookingDate: string;
   createdAt: string;
   updatedAt: string;
   cancelledAt?: string;
@@ -58,7 +74,7 @@ export interface Booking {
 }
 
 export interface Company {
-  _id: string;
+  id: string;
   name: string;
   code: string;
   managerId: string;
@@ -68,7 +84,7 @@ export interface Company {
 }
 
 export interface Banner {
-  _id: string;
+  id: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -81,7 +97,18 @@ export interface Banner {
 }
 
 export interface Gallery {
-  _id: string;
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  active: boolean;
+  category: 'aircraft' | 'destination' | 'service' | 'event';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GalleryImage {
+  id: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -93,15 +120,15 @@ export interface Gallery {
 
 // Token management
 export const getToken = (): string | null => {
-  return localStorage.getItem('jwt_token');
+  return localStorage.getItem('osh-jwt-token');
 };
 
 export const setToken = (token: string): void => {
-  localStorage.setItem('jwt_token', token);
+  localStorage.setItem('osh-jwt-token', token);
 };
 
 export const removeToken = (): void => {
-  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('osh-jwt-token');
 };
 
 // Base fetch wrapper with error handling

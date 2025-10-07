@@ -3,8 +3,8 @@
  * Handles company management operations
  */
 
-import { apiRequest } from './base';
-import { Company } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, Booking, Company, Flight, Gallery, User, normalizeId } from './base';
 
 // Company interfaces
 export interface CreateCompanyRequest {
@@ -38,13 +38,13 @@ export const companiesApi = {
    */
   async getAll(): Promise<Company[]> {
     try {
-      const response = await apiRequest<Company[]>('/companies');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Company[]>('/companies');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch companies');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching companies');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -53,16 +53,16 @@ export const companiesApi = {
    */
   async getById(id: string): Promise<Company> {
     try {
-      const response = await apiRequest<Company>(`/companies/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Company>(`/companies/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Company not found');
         }
         throw new Error(error.message || 'Failed to fetch company');
       }
-      throw new Error('An unexpected error occurred while fetching company');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -71,16 +71,16 @@ export const companiesApi = {
    */
   async create(companyData: CreateCompanyRequest): Promise<Company> {
     try {
-      const response = await apiRequest<Company>('/companies', companyData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<Company>('/companies', companyData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 409) {
           throw new Error('Company with this name or code already exists');
         }
         throw new Error(error.message || 'Failed to create company');
       }
-      throw new Error('An unexpected error occurred while creating company');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -90,8 +90,8 @@ export const companiesApi = {
   async update(id: string, companyData: UpdateCompanyRequest): Promise<Company> {
     try {
       const response = await apiClient.patch<Company>(`/companies/${id}`, companyData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Company not found');
@@ -101,7 +101,7 @@ export const companiesApi = {
         }
         throw new Error(error.message || 'Failed to update company');
       }
-      throw new Error('An unexpected error occurred while updating company');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -110,15 +110,15 @@ export const companiesApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/companies/${id}`);
-    } catch (error) {
+      await apiClient.get(`/companies/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Company not found');
         }
         throw new Error(error.message || 'Failed to delete company');
       }
-      throw new Error('An unexpected error occurred while deleting company');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -129,11 +129,11 @@ export const companiesApi = {
     try {
       const companies = await this.getAll();
       return companies.find(company => company.managerId === managerId) || null;
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch company by manager');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching company by manager');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

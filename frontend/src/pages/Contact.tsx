@@ -57,8 +57,8 @@ export function Contact() {
                 </div>
                 <div>
                   <h4 className="mb-1">Phone</h4>
-                  <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
-                  <p className="text-sm text-muted-foreground">+1 (555) 987-6543</p>
+                  <p className="text-sm text-muted-foreground">+996 (555) 123-456</p>
+                  <p className="text-sm text-muted-foreground">+312 (555) 987-654</p>
                 </div>
               </div>
             </CardContent>

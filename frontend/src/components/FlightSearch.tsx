@@ -6,7 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
-import { cities } from '../lib/mockData';
+import { cities } from '../lib/constants';
 
 export function FlightSearch() {
   const navigate = useNavigate();

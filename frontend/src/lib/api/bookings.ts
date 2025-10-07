@@ -3,8 +3,8 @@
  * Handles booking management operations
  */
 
-import { apiRequest } from './base';
-import { Booking } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, Booking, Company, Flight, Gallery, User, normalizeId } from './base';
 
 // Booking interfaces
 export interface CreateBookingRequest {
@@ -41,13 +41,13 @@ export const bookingsApi = {
    */
   async getAll(): Promise<Booking[]> {
     try {
-      const response = await apiRequest<Booking[]>('/bookings');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Booking[]>('/bookings');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch bookings');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching bookings');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -56,16 +56,16 @@ export const bookingsApi = {
    */
   async getById(id: string): Promise<Booking> {
     try {
-      const response = await apiRequest<Booking>(`/bookings/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Booking>(`/bookings/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Booking not found');
         }
         throw new Error(error.message || 'Failed to fetch booking');
       }
-      throw new Error('An unexpected error occurred while fetching booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -74,16 +74,16 @@ export const bookingsApi = {
    */
   async getByConfirmationId(confirmationId: string): Promise<Booking> {
     try {
-      const response = await apiRequest<Booking>(`/bookings/confirmation/${confirmationId}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Booking>(`/bookings/confirmation/${confirmationId}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Booking not found');
         }
         throw new Error(error.message || 'Failed to fetch booking');
       }
-      throw new Error('An unexpected error occurred while fetching booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -92,13 +92,13 @@ export const bookingsApi = {
    */
   async getByUserId(userId: string): Promise<Booking[]> {
     try {
-      const response = await apiRequest<Booking[]>(`/bookings/user/${userId}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Booking[]>(`/bookings/user/${userId}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch user bookings');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching user bookings');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -107,9 +107,9 @@ export const bookingsApi = {
    */
   async create(bookingData: CreateBookingRequest): Promise<Booking> {
     try {
-      const response = await apiRequest<Booking>('/bookings', bookingData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<Booking>('/bookings', bookingData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 400) {
           throw new Error('Invalid booking data provided');
@@ -119,7 +119,7 @@ export const bookingsApi = {
         }
         throw new Error(error.message || 'Failed to create booking');
       }
-      throw new Error('An unexpected error occurred while creating booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -129,15 +129,15 @@ export const bookingsApi = {
   async update(id: string, bookingData: UpdateBookingRequest): Promise<Booking> {
     try {
       const response = await apiClient.patch<Booking>(`/bookings/${id}`, bookingData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Booking not found');
         }
         throw new Error(error.message || 'Failed to update booking');
       }
-      throw new Error('An unexpected error occurred while updating booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -147,8 +147,8 @@ export const bookingsApi = {
   async cancel(id: string): Promise<Booking> {
     try {
       const response = await apiClient.patch<Booking>(`/bookings/${id}/cancel`);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Booking not found');
@@ -158,7 +158,7 @@ export const bookingsApi = {
         }
         throw new Error(error.message || 'Failed to cancel booking');
       }
-      throw new Error('An unexpected error occurred while cancelling booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -167,15 +167,15 @@ export const bookingsApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/bookings/${id}`);
-    } catch (error) {
+      await apiClient.get(`/bookings/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Booking not found');
         }
         throw new Error(error.message || 'Failed to delete booking');
       }
-      throw new Error('An unexpected error occurred while deleting booking');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -186,11 +186,11 @@ export const bookingsApi = {
     try {
       const bookings = await this.getByUserId(userId);
       return bookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch booking history');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching booking history');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

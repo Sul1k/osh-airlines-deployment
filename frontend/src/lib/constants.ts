@@ -1,0 +1,30 @@
+// Constants used throughout the application
+
+// Cities for search dropdowns
+export const cities = [
+  'New York (JFK)',
+  'Los Angeles (LAX)',
+  'London (LHR)',
+  'Paris (CDG)',
+  'Tokyo (NRT)',
+  'Dubai (DXB)',
+  'Singapore (SIN)',
+  'Sydney (SYD)',
+  'Rome (FCO)',
+  'Barcelona (BCN)',
+  'Amsterdam (AMS)',
+  'Hong Kong (HKG)',
+  'Bangkok (BKK)',
+  'Istanbul (IST)',
+  'Toronto (YYZ)',
+  'San Francisco (SFO)',
+  'Miami (MIA)',
+  'Berlin (BER)',
+  'Madrid (MAD)',
+  'Mumbai (BOM)',
+  'Bishkek (FRU)',
+  'Almaty (ALA)',
+  'Moscow (SVO)',
+  'Frankfurt (FRA)',
+  'Zurich (ZUR)',
+];

@@ -3,8 +3,8 @@
  * Handles banner management operations
  */
 
-import { apiRequest } from './base';
-import { Banner } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, normalizeId } from './base';
 
 // Banner interfaces
 export interface CreateBannerRequest {
@@ -44,13 +44,13 @@ export const bannersApi = {
    */
   async getAll(): Promise<Banner[]> {
     try {
-      const response = await apiRequest<Banner[]>('/banners');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Banner[]>('/banners');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch banners');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching banners');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -59,16 +59,16 @@ export const bannersApi = {
    */
   async getById(id: string): Promise<Banner> {
     try {
-      const response = await apiRequest<Banner>(`/banners/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<Banner>(`/banners/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Banner not found');
         }
         throw new Error(error.message || 'Failed to fetch banner');
       }
-      throw new Error('An unexpected error occurred while fetching banner');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -77,13 +77,13 @@ export const bannersApi = {
    */
   async create(bannerData: CreateBannerRequest): Promise<Banner> {
     try {
-      const response = await apiRequest<Banner>('/banners', bannerData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<Banner>('/banners', bannerData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to create banner');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while creating banner');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -93,15 +93,15 @@ export const bannersApi = {
   async update(id: string, bannerData: UpdateBannerRequest): Promise<Banner> {
     try {
       const response = await apiClient.patch<Banner>(`/banners/${id}`, bannerData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Banner not found');
         }
         throw new Error(error.message || 'Failed to update banner');
       }
-      throw new Error('An unexpected error occurred while updating banner');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -110,15 +110,15 @@ export const bannersApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/banners/${id}`);
-    } catch (error) {
+      await apiClient.delete(`/banners/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Banner not found');
         }
         throw new Error(error.message || 'Failed to delete banner');
       }
-      throw new Error('An unexpected error occurred while deleting banner');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -129,11 +129,11 @@ export const bannersApi = {
     try {
       const banners = await this.getAll();
       return banners.filter(banner => banner.active !== false);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch active banners');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching active banners');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -144,11 +144,11 @@ export const bannersApi = {
     try {
       const banners = await this.getAll();
       return banners.filter(banner => banner.type === type);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch banners by type');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching banners by type');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -158,15 +158,15 @@ export const bannersApi = {
   async activate(id: string): Promise<Banner> {
     try {
       const response = await apiClient.patch<Banner>(`/banners/${id}`, { active: true });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Banner not found');
         }
         throw new Error(error.message || 'Failed to activate banner');
       }
-      throw new Error('An unexpected error occurred while activating banner');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -176,15 +176,15 @@ export const bannersApi = {
   async deactivate(id: string): Promise<Banner> {
     try {
       const response = await apiClient.patch<Banner>(`/banners/${id}`, { active: false });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('Banner not found');
         }
         throw new Error(error.message || 'Failed to deactivate banner');
       }
-      throw new Error('An unexpected error occurred while deactivating banner');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

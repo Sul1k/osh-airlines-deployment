@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User, Flight, Booking, Company, Banner, GalleryImage } from '../types';
+import { User, Flight, Booking, Company, Banner, GalleryImage } from '../api/base';
 import { authApi, flightsApi, bookingsApi, companiesApi, usersApi, bannersApi, galleryApi } from '../api';
 import { useToast } from '../../hooks/useToast';
 
 interface AppContextType {
   // Auth
   currentUser: User | null;
+  isAuthLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (email: string, password: string, name: string) => Promise<boolean>;
@@ -70,6 +71,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -100,7 +102,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [showError]);
 
-  const loadUserBookings = async (userId: string): Promise<void> => {
+  const loadUserBookings = useCallback(async (userId: string): Promise<void> => {
     setLoading(prev => ({ ...prev, bookings: true }));
     try {
       const bookingsData = await bookingsApi.getByUserId(userId);
@@ -111,41 +113,62 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(prev => ({ ...prev, bookings: false }));
     }
-  };
+  }, [showError]);
 
   // Load user from localStorage on mount and verify with backend
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
-    try {
-      const savedUser = localStorage.getItem('osh-user');
-        const token = localStorage.getItem('jwt_token');
+      try {
+        const savedUser = localStorage.getItem('osh-user');
+        const token = localStorage.getItem('osh-jwt-token');
         
-        if (savedUser && token) {
-        const user = JSON.parse(savedUser);
-        setCurrentUser(user);
+        if (savedUser && token && isMounted) {
+          const user = JSON.parse(savedUser);
+          setCurrentUser(user);
           
           // Verify token is still valid by getting profile
           try {
             const profile = await authApi.getProfile();
-            setCurrentUser(profile.user);
-            localStorage.setItem('osh-user', JSON.stringify(profile.user));
-            
-            // Load user's bookings after successful authentication
-            await loadUserBookings(profile.user.id);
+            if (isMounted && profile.user) {
+              setCurrentUser(profile.user);
+              localStorage.setItem('osh-user', JSON.stringify(profile.user));
+              
+              // Load user's bookings after successful authentication
+              await loadUserBookings(profile.user.id);
+            } else if (isMounted) {
+              // Profile call returned null user, clear auth data
+              authApi.logout();
+              setCurrentUser(null);
+            }
           } catch (error) {
             // Token is invalid, clear auth data
-            authApi.logout();
-            setCurrentUser(null);
+            console.warn('Token verification failed:', error);
+            if (isMounted) {
+              authApi.logout();
+              setCurrentUser(null);
+            }
           }
-      }
-    } catch (error) {
+        }
+      } catch (error) {
         console.error('Error initializing auth:', error);
-        authApi.logout();
-        setCurrentUser(null);
-    }
+        if (isMounted) {
+          authApi.logout();
+          setCurrentUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
+      }
     };
 
     initializeAuth();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [loadUserBookings]);
 
   // Authentication functions
@@ -201,7 +224,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addUser = async (user: Omit<User, 'id'>, showSuccessMessage: boolean = true): Promise<User> => {
+  const addUser = async (user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, showSuccessMessage: boolean = true): Promise<User> => {
     try {
       const newUser = await usersApi.create(user);
       setUsers(prev => [...prev, newUser]);
@@ -290,7 +313,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addFlight = async (flight: Omit<Flight, 'id'>): Promise<void> => {
+  const addFlight = async (flight: Omit<Flight, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
     try {
       const newFlight = await flightsApi.create(flight);
       setFlights(prev => [...prev, newFlight]);
@@ -325,9 +348,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Booking management functions
 
-  const addBooking = async (booking: Omit<Booking, 'id' | 'confirmationId' | 'bookingDate' | 'status'>): Promise<string> => {
+  const addBooking = async (booking: Omit<Booking, 'id' | 'confirmationId' | 'bookingDate' | 'status' | 'createdAt' | 'updatedAt' | 'cancelledAt' | 'refundedAt'>): Promise<string> => {
     try {
       const newBooking = await bookingsApi.create(booking);
+      // Refresh flights data to update seat counts
+      await loadFlights();
       // Refresh user's bookings after creating a new one
       if (currentUser) {
         await loadUserBookings(currentUser.id);
@@ -343,6 +368,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const cancelBooking = async (id: string): Promise<void> => {
     try {
       await bookingsApi.cancel(id);
+      // Refresh flights data to update seat counts
+      await loadFlights();
       // Refresh user's bookings after cancellation
       if (currentUser) {
         await loadUserBookings(currentUser.id);
@@ -367,7 +394,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [showError]);
 
-  const addCompany = async (company: Omit<Company, 'id'>): Promise<void> => {
+  const addCompany = async (company: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
     try {
       const newCompany = await companiesApi.create(company);
       setCompanies(prev => [...prev, newCompany]);
@@ -485,6 +512,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
+        isAuthLoading,
         login,
         logout,
         register,

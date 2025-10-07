@@ -13,11 +13,11 @@ export const testApiConnectivity = async () => {
   
   try {
     // Test basic connectivity with a simple GET request
-    const response = await apiRequest('/flights');
+    const response = await apiClient.get('/flights');
     console.log('✅ API connectivity test passed');
     console.log('📊 Response:', response);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ API connectivity test failed:', error);
     return false;
   }
@@ -45,7 +45,7 @@ export const testAuthentication = async () => {
     console.log('👤 User profile:', profileResponse.user.name);
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Authentication test failed:', error);
     return false;
   }
@@ -64,7 +64,7 @@ export const testFlightsApi = async () => {
     console.log('✈️ Flights count:', flights.length);
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Flights API test failed:', error);
     return false;
   }

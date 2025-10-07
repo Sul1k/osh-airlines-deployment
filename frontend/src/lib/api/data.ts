@@ -1,4 +1,5 @@
-import { apiRequest, Flight, Booking, Company, User, Banner, Gallery, normalizeId } from './base';
+import { apiClient } from './apiClient';
+import { Flight, Booking, Company, User, Banner, Gallery, normalizeId } from './base';
 
 export interface FlightSearchParams {
   origin?: string;
@@ -61,7 +62,7 @@ export interface CreateGalleryData {
 export const flightsApi = {
   // Get all flights
   getAll: async (): Promise<Flight[]> => {
-    const response = await apiRequest<Flight[]>('/flights');
+    const response = await apiClient.get<Flight[]>('/flights');
     return normalizeId(response);
   },
 
@@ -72,28 +73,25 @@ export const flightsApi = {
     if (params.destination) queryParams.append('destination', params.destination);
     if (params.departureDate) queryParams.append('departureDate', params.departureDate);
     
-    const response = await apiRequest<Flight[]>(`/flights?${queryParams.toString()}`);
+    const response = await apiClient.get<Flight[]>(`/flights?${queryParams.toString()}`);
     return normalizeId(response);
   },
 
   // Get flight by ID
   getById: async (id: string): Promise<Flight> => {
-    const response = await apiRequest<Flight>(`/flights/${id}`);
+    const response = await apiClient.get<Flight>(`/flights/${id}`);
     return normalizeId(response);
   },
 
-  // Create new flight
-  create: async (flightData: CreateFlightData): Promise<Flight> => {
-    const response = await apiRequest<Flight>('/flights', {
-      method: 'POST',
-      body: JSON.stringify(flightData),
-    });
-    return normalizeId(response);
-  },
+    // Create new flight
+    create: async (flightData: CreateFlightData): Promise<Flight> => {
+      const response = await apiClient.post<Flight>('/flights', flightData);
+      return normalizeId(response);
+    },
 
   // Update flight
   update: async (id: string, flightData: Partial<CreateFlightData>): Promise<Flight> => {
-    const response = await apiRequest<Flight>(`/flights/${id}`, {
+    const response = await apiClient.get<Flight>(`/flights/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(flightData),
     });
@@ -102,7 +100,7 @@ export const flightsApi = {
 
   // Delete flight
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/flights/${id}`, {
+    await apiClient.get(`/flights/${id}`, {
       method: 'DELETE',
     });
   },
@@ -112,31 +110,31 @@ export const flightsApi = {
 export const bookingsApi = {
   // Get all bookings
   getAll: async (): Promise<Booking[]> => {
-    const response = await apiRequest<Booking[]>('/bookings');
+    const response = await apiClient.get<Booking[]>('/bookings');
     return normalizeId(response);
   },
 
   // Get booking by ID
   getById: async (id: string): Promise<Booking> => {
-    const response = await apiRequest<Booking>(`/bookings/${id}`);
+    const response = await apiClient.get<Booking>(`/bookings/${id}`);
     return normalizeId(response);
   },
 
   // Get bookings by user ID
   getByUserId: async (userId: string): Promise<Booking[]> => {
-    const response = await apiRequest<Booking[]>(`/bookings/user/${userId}`);
+    const response = await apiClient.get<Booking[]>(`/bookings/user/${userId}`);
     return normalizeId(response);
   },
 
   // Get booking by confirmation ID
   getByConfirmationId: async (confirmationId: string): Promise<Booking> => {
-    const response = await apiRequest<Booking>(`/bookings/confirmation/${confirmationId}`);
+    const response = await apiClient.get<Booking>(`/bookings/confirmation/${confirmationId}`);
     return normalizeId(response);
   },
 
   // Create new booking
   create: async (bookingData: CreateBookingData): Promise<Booking> => {
-    const response = await apiRequest<Booking>('/bookings', {
+    const response = await apiClient.get<Booking>('/bookings', {
       method: 'POST',
       body: JSON.stringify(bookingData),
     });
@@ -145,7 +143,7 @@ export const bookingsApi = {
 
   // Update booking
   update: async (id: string, bookingData: Partial<CreateBookingData>): Promise<Booking> => {
-    const response = await apiRequest<Booking>(`/bookings/${id}`, {
+    const response = await apiClient.get<Booking>(`/bookings/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(bookingData),
     });
@@ -154,7 +152,7 @@ export const bookingsApi = {
 
   // Cancel booking
   cancel: async (id: string): Promise<Booking> => {
-    const response = await apiRequest<Booking>(`/bookings/${id}/cancel`, {
+    const response = await apiClient.get<Booking>(`/bookings/${id}/cancel`, {
       method: 'PATCH',
     });
     return normalizeId(response);
@@ -162,7 +160,7 @@ export const bookingsApi = {
 
   // Delete booking
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/bookings/${id}`, {
+    await apiClient.get(`/bookings/${id}`, {
       method: 'DELETE',
     });
   },
@@ -172,19 +170,19 @@ export const bookingsApi = {
 export const companiesApi = {
   // Get all companies
   getAll: async (): Promise<Company[]> => {
-    const response = await apiRequest<Company[]>('/companies');
+    const response = await apiClient.get<Company[]>('/companies');
     return normalizeId(response);
   },
 
   // Get company by ID
   getById: async (id: string): Promise<Company> => {
-    const response = await apiRequest<Company>(`/companies/${id}`);
+    const response = await apiClient.get<Company>(`/companies/${id}`);
     return normalizeId(response);
   },
 
   // Create new company
   create: async (companyData: CreateCompanyData): Promise<Company> => {
-    const response = await apiRequest<Company>('/companies', {
+    const response = await apiClient.get<Company>('/companies', {
       method: 'POST',
       body: JSON.stringify(companyData),
     });
@@ -193,7 +191,7 @@ export const companiesApi = {
 
   // Update company
   update: async (id: string, companyData: Partial<CreateCompanyData>): Promise<Company> => {
-    const response = await apiRequest<Company>(`/companies/${id}`, {
+    const response = await apiClient.get<Company>(`/companies/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(companyData),
     });
@@ -202,7 +200,7 @@ export const companiesApi = {
 
   // Delete company
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/companies/${id}`, {
+    await apiClient.get(`/companies/${id}`, {
       method: 'DELETE',
     });
   },
@@ -212,19 +210,19 @@ export const companiesApi = {
 export const usersApi = {
   // Get all users
   getAll: async (): Promise<User[]> => {
-    const response = await apiRequest<User[]>('/users');
+    const response = await apiClient.get<User[]>('/users');
     return normalizeId(response);
   },
 
   // Get user by ID
   getById: async (id: string): Promise<User> => {
-    const response = await apiRequest<User>(`/users/${id}`);
+    const response = await apiClient.get<User>(`/users/${id}`);
     return normalizeId(response);
   },
 
   // Create new user
   create: async (userData: any): Promise<User> => {
-    const response = await apiRequest<User>('/users', {
+    const response = await apiClient.get<User>('/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -233,7 +231,7 @@ export const usersApi = {
 
   // Update user
   update: async (id: string, userData: any): Promise<User> => {
-    const response = await apiRequest<User>(`/users/${id}`, {
+    const response = await apiClient.get<User>(`/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(userData),
     });
@@ -242,7 +240,7 @@ export const usersApi = {
 
   // Delete user
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/users/${id}`, {
+    await apiClient.get(`/users/${id}`, {
       method: 'DELETE',
     });
   },
@@ -252,19 +250,19 @@ export const usersApi = {
 export const bannersApi = {
   // Get all banners
   getAll: async (): Promise<Banner[]> => {
-    const response = await apiRequest<Banner[]>('/banners');
+    const response = await apiClient.get<Banner[]>('/banners');
     return normalizeId(response);
   },
 
   // Get banner by ID
   getById: async (id: string): Promise<Banner> => {
-    const response = await apiRequest<Banner>(`/banners/${id}`);
+    const response = await apiClient.get<Banner>(`/banners/${id}`);
     return normalizeId(response);
   },
 
   // Create new banner
   create: async (bannerData: CreateBannerData): Promise<Banner> => {
-    const response = await apiRequest<Banner>('/banners', {
+    const response = await apiClient.get<Banner>('/banners', {
       method: 'POST',
       body: JSON.stringify(bannerData),
     });
@@ -273,7 +271,7 @@ export const bannersApi = {
 
   // Update banner
   update: async (id: string, bannerData: Partial<CreateBannerData>): Promise<Banner> => {
-    const response = await apiRequest<Banner>(`/banners/${id}`, {
+    const response = await apiClient.get<Banner>(`/banners/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(bannerData),
     });
@@ -282,7 +280,7 @@ export const bannersApi = {
 
   // Delete banner
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/banners/${id}`, {
+    await apiClient.get(`/banners/${id}`, {
       method: 'DELETE',
     });
   },
@@ -293,19 +291,19 @@ export const galleryApi = {
   // Get all gallery items
   getAll: async (category?: string): Promise<Gallery[]> => {
     const endpoint = category ? `/gallery?category=${category}` : '/gallery';
-    const response = await apiRequest<Gallery[]>(endpoint);
+    const response = await apiClient.get<Gallery[]>(endpoint);
     return normalizeId(response);
   },
 
   // Get gallery item by ID
   getById: async (id: string): Promise<Gallery> => {
-    const response = await apiRequest<Gallery>(`/gallery/${id}`);
+    const response = await apiClient.get<Gallery>(`/gallery/${id}`);
     return normalizeId(response);
   },
 
   // Create new gallery item
   create: async (galleryData: CreateGalleryData): Promise<Gallery> => {
-    const response = await apiRequest<Gallery>('/gallery', {
+    const response = await apiClient.get<Gallery>('/gallery', {
       method: 'POST',
       body: JSON.stringify(galleryData),
     });
@@ -314,7 +312,7 @@ export const galleryApi = {
 
   // Update gallery item
   update: async (id: string, galleryData: Partial<CreateGalleryData>): Promise<Gallery> => {
-    const response = await apiRequest<Gallery>(`/gallery/${id}`, {
+    const response = await apiClient.get<Gallery>(`/gallery/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(galleryData),
     });
@@ -323,7 +321,7 @@ export const galleryApi = {
 
   // Delete gallery item
   delete: async (id: string): Promise<void> => {
-    await apiRequest(`/gallery/${id}`, {
+    await apiClient.get(`/gallery/${id}`, {
       method: 'DELETE',
     });
   },

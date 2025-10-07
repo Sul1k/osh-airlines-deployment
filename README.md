@@ -34,3 +34,4 @@ This repository contains both backend and frontend ready for deployment.
 
 ### Frontend:
 - `VITE_API_BASE_URL` - Backend API URL (for separate deployment)
+

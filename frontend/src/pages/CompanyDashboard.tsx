@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plane, Plus, Edit, Trash2, Users, TrendingUp, Calendar } from 'lucide-react';
 import { useApp } from '../lib/context/AppContext';
+import { usersApi } from '../lib/api/users';
 import { Flight } from '../lib/types';
 import { useToast } from '../hooks/useToast';
 import { Button } from '../components/ui/button';
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { cities } from '../lib/mockData';
+import { cities } from '../lib/constants';
 import { Loading } from '../components/ui/loading';
 
 export function CompanyDashboard() {
@@ -67,7 +68,7 @@ export function CompanyDashboard() {
         console.log('Flight IDs:', flightIds);
         
         const companyPassengers = bookings.filter(b => 
-          flightIds.includes(b.flightId) && (b.status === 'confirmed' || b.status === 'booked')
+          flightIds.includes(b.flightId) && b.status === 'confirmed'
         );
         console.log('Company Passengers:', companyPassengers);
       }
@@ -213,6 +214,8 @@ export function CompanyDashboard() {
       businessPrice: hasBusiness ? parseFloat(businessPrice) : 0,
       businessSeats: hasBusiness ? parseInt(businessSeats) : 0,
       isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
 
@@ -254,13 +257,9 @@ export function CompanyDashboard() {
     }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       error('Please fill in all password fields');
-      return;
-    }
-    if (currentPassword !== currentUser.password) {
-      error('Current password is incorrect');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -272,12 +271,23 @@ export function CompanyDashboard() {
       return;
     }
 
-    updateUser(currentUser.id, { password: newPassword });
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowPasswordChange(false);
-    success('Password changed successfully');
+    try {
+      setIsLoading(true);
+      // Call the backend API to change password
+      await usersApi.changePassword(currentUser.id, { 
+        currentPassword, 
+        newPassword 
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordChange(false);
+      success('Password changed successfully!');
+    } catch (err: any) {
+      error(err.message || 'Failed to change password');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Get passengers for company flights
@@ -290,7 +300,7 @@ export function CompanyDashboard() {
     
     const passengers = bookings.filter(b => {
       const isCompanyFlight = flightIds.includes(b.flightId);
-      const isActiveBooking = b.status === 'confirmed' || b.status === 'booked';
+      const isActiveBooking = b.status === 'confirmed';
       console.log(`Booking ${b.id}: flightId=${b.flightId}, isCompanyFlight=${isCompanyFlight}, status=${b.status}, isActiveBooking=${isActiveBooking}`);
       return isCompanyFlight && isActiveBooking;
     });
@@ -339,6 +349,7 @@ export function CompanyDashboard() {
           <TabsTrigger value="flights">Flights</TabsTrigger>
           <TabsTrigger value="passengers">Passengers</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
 
         {/* Flights Tab */}
@@ -543,7 +554,17 @@ export function CompanyDashboard() {
                           <TableCell>{isValidDate ? departureDate.toLocaleString() : 'Invalid Date'}</TableCell>
                           <TableCell>{isNaN(totalAvailable) ? 'N/A' : totalAvailable}</TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded text-xs ${(flight.status || 'upcoming') === 'upcoming' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              (flight.status || 'upcoming') === 'upcoming' 
+                                ? 'bg-green-100 text-green-800' 
+                                : (flight.status || 'upcoming') === 'passed'
+                                ? 'bg-red-100 text-red-800'
+                                : (flight.status || 'upcoming') === 'cancelled'
+                                ? 'bg-gray-100 text-gray-800'
+                                : (flight.status || 'upcoming') === 'refunded'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
                               {flight.status || 'upcoming'}
                             </span>
                           </TableCell>
@@ -677,6 +698,95 @@ export function CompanyDashboard() {
                   </div>
                   <TrendingUp className="w-8 h-8 text-muted-foreground" />
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Company Profile Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Profile</CardTitle>
+                <CardDescription>View and manage your company information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    value={company?.name || ''}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyEmail">Email</Label>
+                  <Input
+                    id="companyEmail"
+                    value={currentUser?.email || ''}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyRole">Role</Label>
+                  <Input
+                    id="companyRole"
+                    value={currentUser?.role || ''}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Password Change Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <Button 
+                  onClick={handlePasswordChange}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? 'Changing Password...' : 'Change Password'}
+                </Button>
               </CardContent>
             </Card>
           </div>

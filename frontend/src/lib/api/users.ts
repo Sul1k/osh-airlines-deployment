@@ -3,8 +3,8 @@
  * Handles user management operations
  */
 
-import { apiRequest } from './base';
-import { User } from '../types';
+import { apiClient, ApiError } from './apiClient';
+import { Banner, Booking, Company, Flight, Gallery, User, normalizeId } from './base';
 
 // User interfaces
 export interface CreateUserRequest {
@@ -43,13 +43,13 @@ export const usersApi = {
    */
   async getAll(): Promise<User[]> {
     try {
-      const response = await apiRequest<User[]>('/users');
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<User[]>('/users');
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
-        throw new Error(error.message || 'Failed to fetch users');
+        throw error;
       }
-      throw new Error('An unexpected error occurred while fetching users');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -58,16 +58,16 @@ export const usersApi = {
    */
   async getById(id: string): Promise<User> {
     try {
-      const response = await apiRequest<User>(`/users/${id}`);
-      return response;
-    } catch (error) {
+      const response = await apiClient.get<User>(`/users/${id}`);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
         }
         throw new Error(error.message || 'Failed to fetch user');
       }
-      throw new Error('An unexpected error occurred while fetching user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -76,16 +76,16 @@ export const usersApi = {
    */
   async create(userData: CreateUserRequest): Promise<User> {
     try {
-      const response = await apiRequest<User>('/users', userData);
-      return response;
-    } catch (error) {
+      const response = await apiClient.post<User>('/users', userData);
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 409) {
           throw new Error('User with this email already exists');
         }
         throw new Error(error.message || 'Failed to create user');
       }
-      throw new Error('An unexpected error occurred while creating user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -95,8 +95,8 @@ export const usersApi = {
   async update(id: string, userData: UpdateUserRequest): Promise<User> {
     try {
       const response = await apiClient.patch<User>(`/users/${id}`, userData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
@@ -106,7 +106,7 @@ export const usersApi = {
         }
         throw new Error(error.message || 'Failed to update user');
       }
-      throw new Error('An unexpected error occurred while updating user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -115,15 +115,15 @@ export const usersApi = {
    */
   async delete(id: string): Promise<void> {
     try {
-      await apiRequest(`/users/${id}`);
-    } catch (error) {
+      await apiClient.get(`/users/${id}`);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
         }
         throw new Error(error.message || 'Failed to delete user');
       }
-      throw new Error('An unexpected error occurred while deleting user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -133,15 +133,15 @@ export const usersApi = {
   async block(id: string): Promise<User> {
     try {
       const response = await apiClient.patch<User>(`/users/${id}`, { isActive: false });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
         }
         throw new Error(error.message || 'Failed to block user');
       }
-      throw new Error('An unexpected error occurred while blocking user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -151,15 +151,15 @@ export const usersApi = {
   async unblock(id: string): Promise<User> {
     try {
       const response = await apiClient.patch<User>(`/users/${id}`, { isActive: true });
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
         }
         throw new Error(error.message || 'Failed to unblock user');
       }
-      throw new Error('An unexpected error occurred while unblocking user');
+      throw new Error('An unexpected error occurred');
     }
   },
 
@@ -169,8 +169,8 @@ export const usersApi = {
   async changePassword(id: string, passwordData: ChangePasswordRequest): Promise<User> {
     try {
       const response = await apiClient.patch<User>(`/users/${id}/change-password`, passwordData);
-      return response;
-    } catch (error) {
+      return normalizeId(response);
+    } catch (error: any) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
           throw new Error('User not found');
@@ -180,7 +180,7 @@ export const usersApi = {
         }
         throw new Error(error.message || 'Failed to change password');
       }
-      throw new Error('An unexpected error occurred while changing password');
+      throw new Error('An unexpected error occurred');
     }
   }
 };

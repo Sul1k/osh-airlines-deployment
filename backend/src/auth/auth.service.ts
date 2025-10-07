@@ -16,6 +16,12 @@ export class AuthService {
     console.log('validateUser -> user found:', !!user);
     if (!user) return null;
     
+    // Check if user is active (not blocked)
+    if (user.isActive === false) {
+      console.log('validateUser -> user is blocked');
+      throw new UnauthorizedException('Account has been blocked. Please contact support.');
+    }
+    
     const valid = await bcrypt.compare(password, user.password);
     console.log('validateUser -> password match:', valid);
     if (!valid) return null;

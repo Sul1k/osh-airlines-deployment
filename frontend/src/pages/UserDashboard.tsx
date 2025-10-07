@@ -12,6 +12,7 @@ import { Separator } from '../components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
+import { formatDuration } from '../lib/utils/duration';
 
 export function UserDashboard() {
   const navigate = useNavigate();
@@ -19,10 +20,12 @@ export function UserDashboard() {
   const { currentUser, bookings, flights, companies, cancelBooking, changePassword, loadUserBookings } = useApp();
   const [searchConfirmation, setSearchConfirmation] = useState('');
   const [searchResult, setSearchResult] = useState<{ booking: any; flight: any; company: any } | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Load user's bookings when component mounts
   useEffect(() => {
@@ -47,15 +50,34 @@ export function UserDashboard() {
   };
 
   const handleSearchByConfirmation = () => {
-    const booking = bookings.find(b => b.confirmationId.toLowerCase() === searchConfirmation.toLowerCase());
-    if (booking) {
-      const flight = getFlightDetails(booking.flightId);
-      const company = flight ? companies.find(c => c.id === flight.companyId) : null;
-      setSearchResult({ booking, flight, company: company || null });
+    setHasSearched(true);
+    performSearch();
+  };
+
+  const performSearch = () => {
+    if (searchConfirmation.trim()) {
+      const booking = bookings.find(b => b.confirmationId.toLowerCase() === searchConfirmation.toLowerCase());
+      if (booking) {
+        const flight = getFlightDetails(booking.flightId);
+        const company = flight ? companies.find(c => c.id === flight.companyId) : null;
+        setSearchResult({ booking, flight, company: company || null });
+      } else {
+        setSearchResult(null);
+      }
     } else {
       setSearchResult(null);
     }
   };
+
+  // Real-time search as user types
+  useEffect(() => {
+    if (searchConfirmation.trim()) {
+      performSearch();
+    } else {
+      setSearchResult(null);
+      setHasSearched(false);
+    }
+  }, [searchConfirmation, bookings, flights, companies]);
 
   const handleCancelBooking = (bookingId: string) => {
     cancelBooking(bookingId);
@@ -121,7 +143,9 @@ export function UserDashboard() {
     const departureDate = new Date(flight.departureDate);
     const now = new Date();
     const hoursUntilDeparture = (departureDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    return hoursUntilDeparture > 0;
+    
+    // Can only cancel if at least 24 hours before departure
+    return hoursUntilDeparture >= 24;
   };
 
   const getRefundInfo = (flightId: string) => {
@@ -232,6 +256,45 @@ export function UserDashboard() {
 
             {/* My Bookings Tab */}
             <TabsContent value="bookings" className="space-y-4">
+              {/* Status Filter Buttons */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Button
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('all')}
+                >
+                  All ({userBookings.length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'confirmed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('confirmed')}
+                >
+                  Confirmed ({userBookings.filter(b => getDisplayStatus(b) === 'confirmed').length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'refunded' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('refunded')}
+                >
+                  Refunded ({userBookings.filter(b => getDisplayStatus(b) === 'refunded').length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'cancelled' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('cancelled')}
+                >
+                  Cancelled ({userBookings.filter(b => getDisplayStatus(b) === 'cancelled').length})
+                </Button>
+                <Button
+                  variant={statusFilter === 'passed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('passed')}
+                >
+                  Passed ({userBookings.filter(b => getDisplayStatus(b) === 'passed').length})
+                </Button>
+              </div>
+
               {userBookings.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">
@@ -246,7 +309,13 @@ export function UserDashboard() {
                   </CardContent>
                 </Card>
               ) : (
-                userBookings.map((booking, index) => {
+                userBookings
+                  .filter(booking => {
+                    if (statusFilter === 'all') return true;
+                    const displayStatus = getDisplayStatus(booking);
+                    return displayStatus === statusFilter;
+                  })
+                  .map((booking, index) => {
                   const flight = getFlightDetails(booking.flightId);
                   if (!flight) return null;
 
@@ -403,7 +472,7 @@ export function UserDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              ) : searchConfirmation && searchResult === null ? (
+              ) : hasSearched && searchResult === null ? (
                 <Card>
                   <CardContent className="py-8 text-center">
                     <p className="text-muted-foreground">No booking found with this confirmation ID</p>
@@ -438,7 +507,7 @@ export function UserDashboard() {
                             </div>
                             <div>
                               <p className="text-muted-foreground">Duration</p>
-                              <p>{flight.duration}</p>
+                              <p>{formatDuration(flight.duration)}</p>
                             </div>
                           </div>
                         </div>

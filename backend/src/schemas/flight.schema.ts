@@ -49,9 +49,9 @@ export class Flight {
 
   @Prop({ 
     default: 'upcoming',
-    enum: ['upcoming', 'passed']
+    enum: ['upcoming', 'passed', 'cancelled', 'refunded']
   })
-  status: 'upcoming' | 'passed';
+  status: 'upcoming' | 'passed' | 'cancelled' | 'refunded';
 }
 
 export const FlightSchema = SchemaFactory.createForClass(Flight);

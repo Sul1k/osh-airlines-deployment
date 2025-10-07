@@ -3,8 +3,8 @@
  * Handles login, registration, and profile management
  */
 
-import { apiRequest } from './base';
-import { User } from '../types';
+import { apiClient } from './apiClient';
+import { User } from './base';
 
 // Authentication interfaces
 export interface LoginRequest {
@@ -42,10 +42,7 @@ export const authApi = {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await apiRequest<LoginResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
+      const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
       
       // Store token in localStorage
       if (response.access_token) {
@@ -66,10 +63,7 @@ export const authApi = {
    */
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
     try {
-      const response = await apiRequest<RegisterResponse>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
+      const response = await apiClient.post<RegisterResponse>('/auth/register', userData);
       
       // Store token in localStorage
       if (response.access_token) {
@@ -90,7 +84,7 @@ export const authApi = {
    */
   async getProfile(): Promise<ProfileResponse> {
     try {
-      const response = await apiRequest<ProfileResponse>('/auth/profile');
+      const response = await apiClient.get<ProfileResponse>('/auth/profile');
       return response;
     } catch (error) {
       if (error instanceof Error) {
@@ -114,7 +108,7 @@ export const authApi = {
       localStorage.removeItem('osh-jwt-token');
       
       // Optionally call logout endpoint if backend supports it
-      // await apiRequest('/auth/logout');
+      // await apiClient.get('/auth/logout');
     } catch (error) {
       // Even if logout fails, we should clear the local token
       localStorage.removeItem('osh-jwt-token');
