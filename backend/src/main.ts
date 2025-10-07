@@ -99,7 +99,7 @@ async function bootstrap() {
   
   // Dynamic route handler for JavaScript assets (to handle filename changes)
   if (frontendBuildPath) {
-    app.get('/assets/index-*.js', (req: any, res: any) => {
+    app.get('/assets/index-:hash.js', (req: any, res: any) => {
       try {
         const fs = require('fs');
         const assetsPath = join(frontendBuildPath, 'assets');
