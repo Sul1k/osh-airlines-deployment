@@ -11,6 +11,11 @@ export class BannersService {
     // Validate banner data
     this.validateBannerData(createBannerDto);
 
+    // Ensure imageUrl is complete and valid
+    if (createBannerDto.imageUrl && !this.isCompleteImageUrl(createBannerDto.imageUrl)) {
+      createBannerDto.imageUrl = this.getDefaultImageUrl();
+    }
+
     const banner = new this.bannerModel(createBannerDto);
     return banner.save();
   }
@@ -108,7 +113,17 @@ export class BannersService {
   }
 
   async findAll(): Promise<Banner[]> {
-    return this.bannerModel.find().sort({ createdAt: -1 }).exec();
+    const banners = await this.bannerModel.find().sort({ createdAt: -1 }).exec();
+    
+    // Fix any banners with incomplete image URLs
+    for (const banner of banners) {
+      if (banner.imageUrl && !this.isCompleteImageUrl(banner.imageUrl)) {
+        banner.imageUrl = this.getDefaultImageUrl();
+        await banner.save();
+      }
+    }
+    
+    return banners;
   }
 
   async findOne(id: string): Promise<Banner> {
@@ -131,6 +146,11 @@ export class BannersService {
     // Validate update data if provided
     if (Object.keys(updateBannerDto).length > 0) {
       this.validateBannerUpdateData(updateBannerDto);
+    }
+
+    // Ensure imageUrl is complete and valid if being updated
+    if (updateBannerDto.imageUrl && !this.isCompleteImageUrl(updateBannerDto.imageUrl)) {
+      updateBannerDto.imageUrl = this.getDefaultImageUrl();
     }
 
     const banner = await this.bannerModel.findByIdAndUpdate(
@@ -160,5 +180,24 @@ export class BannersService {
   private isValidObjectId(id: string): boolean {
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
     return objectIdRegex.test(id);
+  }
+
+  private isCompleteImageUrl(url: string): boolean {
+    // Check if URL is complete (not truncated)
+    const urlRegex = /^https?:\/\/.+\.[a-zA-Z]{2,4}(\?.*)?$/;
+    return urlRegex.test(url) && !url.endsWith(':');
+  }
+
+  private getDefaultImageUrl(): string {
+    // Return a default high-quality image URL
+    const defaultImages = [
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=800&h=400&fit=crop'
+    ];
+    
+    // Return a random default image
+    return defaultImages[Math.floor(Math.random() * defaultImages.length)];
   }
 }

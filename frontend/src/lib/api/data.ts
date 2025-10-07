@@ -262,27 +262,19 @@ export const bannersApi = {
 
   // Create new banner
   create: async (bannerData: CreateBannerData): Promise<Banner> => {
-    const response = await apiClient.get<Banner>('/banners', {
-      method: 'POST',
-      body: JSON.stringify(bannerData),
-    });
+    const response = await apiClient.post<Banner>('/banners', bannerData);
     return normalizeId(response);
   },
 
   // Update banner
   update: async (id: string, bannerData: Partial<CreateBannerData>): Promise<Banner> => {
-    const response = await apiClient.get<Banner>(`/banners/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(bannerData),
-    });
+    const response = await apiClient.patch<Banner>(`/banners/${id}`, bannerData);
     return normalizeId(response);
   },
 
   // Delete banner
   delete: async (id: string): Promise<void> => {
-    await apiClient.get(`/banners/${id}`, {
-      method: 'DELETE',
-    });
+    await apiClient.delete(`/banners/${id}`);
   },
 };
 

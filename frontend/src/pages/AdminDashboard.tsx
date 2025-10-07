@@ -689,7 +689,15 @@ export function AdminDashboard() {
               <Card key={banner.id || `banner-${index}`}>
                 <CardContent className="p-4">
                   <div className="aspect-video mb-3 rounded-lg overflow-hidden bg-muted">
-                    <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                    <img 
+                      src={banner.imageUrl} 
+                      alt={banner.title} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to a default image if the URL fails
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&h=400&fit=crop';
+                      }}
+                    />
                   </div>
                   <div className="flex items-start justify-between mb-2">
                     <div>

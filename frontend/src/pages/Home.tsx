@@ -98,6 +98,10 @@ export function Home() {
                 src={banner.imageUrl}
                 alt={banner.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to a default image if the URL fails
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&h=400&fit=crop';
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent">
                 <div className="container mx-auto px-4 h-full flex items-center">
