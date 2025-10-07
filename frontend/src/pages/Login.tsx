@@ -102,13 +102,13 @@ export function Login() {
               <p className="text-sm text-muted-foreground mb-3">Demo accounts:</p>
               <div className="space-y-2 text-xs">
                 <div className="p-2 bg-muted rounded">
-                  <p><strong>User:</strong> user@osh.com / user123</p>
+                  <p><strong>User:</strong> egemberd1ev.xx@gmail.com / user123</p>
                 </div>
                 <div className="p-2 bg-muted rounded">
-                  <p><strong>Company Manager:</strong> manager@osh.com / manager123</p>
+                  <p><strong>Company Manager:</strong> manager@ais.com / aitsky123</p>
                 </div>
                 <div className="p-2 bg-muted rounded">
-                  <p><strong>Admin:</strong> admin@osh.com / admin123</p>
+                  <p><strong>Admin:</strong> admin@osh-airlines.com / user123</p>
                 </div>
               </div>
             </div>

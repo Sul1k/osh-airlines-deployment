@@ -166,7 +166,7 @@ export function AdminDashboard() {
         // Create manager user first
         const createdUser = await addUser({
           email: sanitizedEmail,
-          password: 'manager123',
+          password: 'aitsky123',
           name: sanitizedName + ' Manager',
           role: 'company_manager',
           isActive: true,

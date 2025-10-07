@@ -32,8 +32,8 @@ export const testAuthentication = async () => {
   try {
     // Test login with admin credentials
     const loginResponse = await authApi.login({
-      email: 'admin@osh.com',
-      password: 'admin123'
+      email: 'admin@osh-airlines.com',
+      password: 'user123'
     });
     
     console.log('✅ Login test passed');
