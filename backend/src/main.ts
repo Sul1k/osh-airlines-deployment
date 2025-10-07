@@ -35,20 +35,47 @@ async function bootstrap() {
     join(__dirname, '..', '..', 'frontend', 'build'),
     join(__dirname, '..', '..', '..', 'frontend', 'build'),
     join(process.cwd(), 'frontend', 'build'),
-    join(process.cwd(), '..', 'frontend', 'build')
+    join(process.cwd(), '..', 'frontend', 'build'),
+    join(__dirname, '..', '..', '..', '..', 'frontend', 'build'),
+    join(process.cwd(), '..', '..', 'frontend', 'build')
   ];
   
+  let staticPathFound = false;
   for (const path of frontendPaths) {
     try {
       const fs = require('fs');
       if (fs.existsSync(path)) {
         app.useStaticAssets(path);
         logger.log(`📁 Serving static files from: ${path}`);
+        
+        // Log the contents of the directory for debugging
+        try {
+          const files = fs.readdirSync(path);
+          logger.log(`📁 Files in ${path}:`, files);
+          
+          // Check if assets directory exists
+          const assetsPath = join(path, 'assets');
+          if (fs.existsSync(assetsPath)) {
+            const assetFiles = fs.readdirSync(assetsPath);
+            logger.log(`📁 Assets in ${assetsPath}:`, assetFiles);
+          } else {
+            logger.warn(`⚠️ Assets directory not found at: ${assetsPath}`);
+          }
+        } catch (dirError) {
+          logger.warn(`⚠️ Could not read directory contents: ${dirError.message}`);
+        }
+        
+        staticPathFound = true;
         break;
       }
     } catch (error) {
       // Continue to next path
     }
+  }
+  
+  if (!staticPathFound) {
+    logger.error('❌ No frontend build directory found!');
+    logger.error('Searched paths:', frontendPaths);
   }
   
   // Global prefix for API routes only
