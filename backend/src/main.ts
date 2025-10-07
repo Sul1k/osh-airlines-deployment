@@ -43,11 +43,14 @@ async function bootstrap() {
   ];
   
   let staticPathFound = false;
+  let frontendBuildPath = '';
+  
   for (const path of frontendPaths) {
     try {
       const fs = require('fs');
       if (fs.existsSync(path)) {
         app.useStaticAssets(path);
+        frontendBuildPath = path;
         logger.log(`📁 Serving static files from: ${path}`);
         
         // Log the contents of the directory for debugging
@@ -93,6 +96,28 @@ async function bootstrap() {
   
   // Global prefix for API routes only
   app.setGlobalPrefix('api/v1');
+  
+  // Dynamic route handler for JavaScript assets (to handle filename changes)
+  if (frontendBuildPath) {
+    app.get('/assets/index-*.js', (req: any, res: any) => {
+      try {
+        const fs = require('fs');
+        const assetsPath = join(frontendBuildPath, 'assets');
+        const files = fs.readdirSync(assetsPath);
+        const jsFile = files.find((file: string) => file.startsWith('index-') && file.endsWith('.js'));
+        
+        if (jsFile) {
+          const filePath = join(assetsPath, jsFile);
+          res.sendFile(filePath);
+        } else {
+          res.status(404).send('JavaScript file not found');
+        }
+      } catch (error) {
+        logger.error('Error serving JavaScript file:', error);
+        res.status(500).send('Internal server error');
+      }
+    });
+  }
   
   // Serve frontend for all non-API routes (SPA fallback)
   app.use((req: any, res: any, next: any) => {
