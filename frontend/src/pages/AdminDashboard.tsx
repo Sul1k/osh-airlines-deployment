@@ -83,6 +83,10 @@ export function AdminDashboard() {
   const [galleryImageUrl, setGalleryImageUrl] = useState('');
   const [galleryCategory, setGalleryCategory] = useState<'aircraft' | 'destination' | 'service' | 'event'>('aircraft');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Gallery Delete Confirmation Dialog State
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<{ id: string; title: string } | null>(null);
 
   if (!currentUser || currentUser.role !== 'admin') {
     navigate('/login');
@@ -325,18 +329,28 @@ export function AdminDashboard() {
     success('Gallery image added successfully');
   };
 
-  const handleDeleteGalleryImage = (imageId: string) => {
+  const handleDeleteGalleryImage = (imageId: string, imageTitle: string) => {
     console.log('🗑️ Delete button clicked for image ID:', imageId);
     if (!imageId) {
       error('Image ID is missing. Cannot delete image.');
       return;
     }
-    if (confirm('Are you sure you want to delete this image?')) {
-      console.log('🗑️ Confirmed deletion, calling deleteGalleryImage...');
-      deleteGalleryImage(imageId);
+    setImageToDelete({ id: imageId, title: imageTitle });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteGalleryImage = async () => {
+    if (!imageToDelete) return;
+    
+    console.log('🗑️ Confirmed deletion, calling deleteGalleryImage...');
+    try {
+      await deleteGalleryImage(imageToDelete.id);
       success('Gallery image deleted successfully');
-    } else {
-      console.log('🗑️ Deletion cancelled by user');
+    } catch (error) {
+      // Error is already handled in deleteGalleryImage
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setImageToDelete(null);
     }
   };
 
@@ -810,7 +824,7 @@ export function AdminDashboard() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => image.id ? handleDeleteGalleryImage(image.id) : error('Image ID is missing. Cannot delete image.')}
+                    onClick={() => image.id ? handleDeleteGalleryImage(image.id, image.title) : error('Image ID is missing. Cannot delete image.')}
                   >
                     <Trash2 className="w-4 h-4 text-destructive mr-1" />
                     Delete
@@ -889,6 +903,36 @@ export function AdminDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Gallery Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Gallery Image</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the image "{imageToDelete?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setImageToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteGalleryImage}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
