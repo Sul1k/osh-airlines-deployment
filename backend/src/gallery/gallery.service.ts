@@ -11,6 +11,11 @@ export class GalleryService {
     // Validate gallery data
     this.validateGalleryData(createGalleryDto);
 
+    // Ensure imageUrl is complete and valid
+    if (createGalleryDto.imageUrl && !this.isCompleteImageUrl(createGalleryDto.imageUrl)) {
+      createGalleryDto.imageUrl = this.getDefaultImageUrl();
+    }
+
     const gallery = new this.galleryModel(createGalleryDto);
     return gallery.save();
   }
@@ -145,5 +150,24 @@ export class GalleryService {
   private isValidObjectId(id: string): boolean {
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
     return objectIdRegex.test(id);
+  }
+
+  private isCompleteImageUrl(url: string): boolean {
+    // Check if URL is complete (not truncated)
+    const urlRegex = /^https?:\/\/.+\.[a-zA-Z]{2,4}(\?.*)?$/;
+    return urlRegex.test(url) && !url.endsWith(':');
+  }
+
+  private getDefaultImageUrl(): string {
+    // Return a default high-quality image URL
+    const defaultImages = [
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop'
+    ];
+    
+    // Return a random default image
+    return defaultImages[Math.floor(Math.random() * defaultImages.length)];
   }
 }

@@ -295,26 +295,18 @@ export const galleryApi = {
 
   // Create new gallery item
   create: async (galleryData: CreateGalleryData): Promise<Gallery> => {
-    const response = await apiClient.get<Gallery>('/gallery', {
-      method: 'POST',
-      body: JSON.stringify(galleryData),
-    });
+    const response = await apiClient.post<Gallery>('/gallery', galleryData);
     return normalizeId(response);
   },
 
   // Update gallery item
   update: async (id: string, galleryData: Partial<CreateGalleryData>): Promise<Gallery> => {
-    const response = await apiClient.get<Gallery>(`/gallery/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(galleryData),
-    });
+    const response = await apiClient.patch<Gallery>(`/gallery/${id}`, galleryData);
     return normalizeId(response);
   },
 
   // Delete gallery item
   delete: async (id: string): Promise<void> => {
-    await apiClient.get(`/gallery/${id}`, {
-      method: 'DELETE',
-    });
+    await apiClient.delete(`/gallery/${id}`);
   },
 };
