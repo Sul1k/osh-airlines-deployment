@@ -54,13 +54,19 @@ async function bootstrap() {
   // Global prefix for API routes only
   app.setGlobalPrefix('api/v1');
   
-  // Serve frontend for all non-API routes
+  // Serve frontend for all non-API routes (SPA fallback)
   app.use((req: any, res: any, next: any) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
       return next();
     }
     
+    // Skip asset requests - let Express static middleware handle them
+    if (req.path.startsWith('/assets/') || req.path.includes('.')) {
+      return next();
+    }
+    
+    // For all other routes, serve index.html (SPA routing)
     const frontendPaths = [
       join(__dirname, '..', '..', 'frontend', 'build', 'index.html'),
       join(__dirname, '..', '..', '..', 'frontend', 'build', 'index.html'),
