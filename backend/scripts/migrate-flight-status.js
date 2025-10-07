@@ -1,10 +1,7 @@
 const mongoose = require('mongoose');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/osh-airlines', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect('mongodb://localhost:27017/osh-airlines');
 
 const flightSchema = new mongoose.Schema({
   flightNumber: String,
