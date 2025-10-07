@@ -99,22 +99,28 @@ async function bootstrap() {
   
   // Dynamic middleware for JavaScript assets (to handle filename changes)
   if (frontendBuildPath) {
-    app.use('/assets/index-*.js', (req: any, res: any, next: any) => {
-      try {
-        const fs = require('fs');
-        const assetsPath = join(frontendBuildPath, 'assets');
-        const files = fs.readdirSync(assetsPath);
-        const jsFile = files.find((file: string) => file.startsWith('index-') && file.endsWith('.js'));
-        
-        if (jsFile) {
-          const filePath = join(assetsPath, jsFile);
-          res.sendFile(filePath);
-        } else {
-          res.status(404).send('JavaScript file not found');
+    app.use('/assets', (req: any, res: any, next: any) => {
+      // Check if this is a request for index-*.js files
+      if (req.path.startsWith('/index-') && req.path.endsWith('.js')) {
+        try {
+          const fs = require('fs');
+          const assetsPath = join(frontendBuildPath, 'assets');
+          const files = fs.readdirSync(assetsPath);
+          const jsFile = files.find((file: string) => file.startsWith('index-') && file.endsWith('.js'));
+          
+          if (jsFile) {
+            const filePath = join(assetsPath, jsFile);
+            res.sendFile(filePath);
+          } else {
+            res.status(404).send('JavaScript file not found');
+          }
+        } catch (error) {
+          logger.error('Error serving JavaScript file:', error);
+          res.status(500).send('Internal server error');
         }
-      } catch (error) {
-        logger.error('Error serving JavaScript file:', error);
-        res.status(500).send('Internal server error');
+      } else {
+        // Let the static middleware handle other assets
+        next();
       }
     });
   }
